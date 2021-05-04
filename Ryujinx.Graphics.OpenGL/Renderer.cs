@@ -130,6 +130,11 @@ namespace Ryujinx.Graphics.OpenGL
 
             PrintGpuInformation();
 
+            if (HwCapabilities.SupportsParallelShaderCompile)
+            {
+                GL.Arb.MaxShaderCompilerThreads(Math.Min(Environment.ProcessorCount, 8));
+            }
+
             _counters.Initialize();
         }
 
@@ -149,7 +154,7 @@ namespace Ryujinx.Graphics.OpenGL
 
         public void BackgroundContextAction(Action action)
         {
-            if (GraphicsContext.CurrentContext != null)
+            if (IOpenGLContext.HasContext())
             {
                 action(); // We have a context already - use that (assuming it is the main one).
             }
@@ -159,7 +164,7 @@ namespace Ryujinx.Graphics.OpenGL
             }
         }
 
-        public void InitializeBackgroundContext(IGraphicsContext baseContext)
+        public void InitializeBackgroundContext(IOpenGLContext baseContext)
         {
             _window.InitializeBackgroundContext(baseContext);
         }
@@ -177,16 +182,7 @@ namespace Ryujinx.Graphics.OpenGL
 
         public IProgram LoadProgramBinary(byte[] programBinary)
         {
-            Program program = new Program(programBinary);
-
-            if (program.IsLinked)
-            {
-                return program;
-            }
-
-            program.Dispose();
-
-            return null;
+            return new Program(programBinary);
         }
 
         public void CreateSync(ulong id)
